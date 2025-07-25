@@ -1,0 +1,127 @@
+# Alert Rules Configuration for BMC Security Monitoring
+# D6: Static rules for flash-at-runtime and SHA mismatch detection
+
+# Rule categories
+rules:
+  # Flash-at-runtime detection
+  flash_at_runtime:
+    name: "Flash Write During Runtime"
+    description: "Detect unauthorized flash write operations during normal BMC operation"
+    severity: "critical"
+    conditions:
+      - field: "flash_writes_total"
+        operator: "gt"
+        threshold: 10
+        window: "60s"
+      - field: "flash_writes_mean"
+        operator: "gt"
+        threshold: 2.0
+        window: "60s"
+    mitigation: "Immediate BMC isolation and firmware integrity check required"
+    risk_score: 0.9
+
+  # SHA mismatch detection
+  sha_mismatch:
+    name: "Firmware SHA-256 Mismatch"
+    description: "Detect firmware image with invalid SHA-256 hash"
+    severity: "critical"
+    conditions:
+      - field: "sha256_valid"
+        operator: "eq"
+        value: false
+    mitigation: "Firmware rollback to last known good version and supply chain audit"
+    risk_score: 1.0
+
+  # High CPU anomaly
+  cpu_spike:
+    name: "CPU Usage Anomaly"
+    description: "Detect unusual CPU usage patterns"
+    severity: "high"
+    conditions:
+      - field: "cpu_mean"
+        operator: "gt"
+        threshold: 80.0
+        window: "60s"
+      - field: "cpu_std"
+        operator: "gt"
+        threshold: 15.0
+        window: "60s"
+    mitigation: "Investigate running processes and check for unauthorized code execution"
+    risk_score: 0.7
+
+  # Memory exhaustion
+  memory_exhaustion:
+    name: "Memory Exhaustion Attack"
+    description: "Detect potential memory exhaustion attacks"
+    severity: "high"
+    conditions:
+      - field: "mem_mean"
+        operator: "gt"
+        threshold: 90.0
+        window: "60s"
+      - field: "mem_std"
+        operator: "gt"
+        threshold: 20.0
+        window: "60s"
+    mitigation: "Restart BMC services and investigate memory leaks"
+    risk_score: 0.8
+
+  # Network anomaly
+  network_burst:
+    name: "Network Traffic Burst"
+    description: "Detect unusual network traffic patterns"
+    severity: "medium"
+    conditions:
+      - field: "total_packets"
+        operator: "gt"
+        threshold: 1000
+        window: "60s"
+      - field: "error_rate"
+        operator: "gt"
+        threshold: 0.01
+        window: "60s"
+    mitigation: "Check network configuration and monitor for DDoS attacks"
+    risk_score: 0.6
+
+  # Syscall anomaly
+  syscall_anomaly:
+    name: "System Call Anomaly"
+    description: "Detect unusual system call patterns"
+    severity: "high"
+    conditions:
+      - field: "syscalls_total"
+        operator: "gt"
+        threshold: 3000
+        window: "60s"
+      - field: "syscalls_std"
+        operator: "gt"
+        threshold: 50.0
+        window: "60s"
+    mitigation: "Audit system calls and check for privilege escalation attempts"
+    risk_score: 0.8
+
+# ML score thresholds
+ml_thresholds:
+  behavioral_anomaly:
+    low: 0.3
+    medium: 0.5
+    high: 0.7
+    critical: 0.9
+  
+  firmware_tamper:
+    low: 0.2
+    medium: 0.4
+    high: 0.6
+    critical: 0.8
+
+# Alert correlation rules
+correlation:
+  - name: "Multi-Vector Attack"
+    description: "Detect coordinated attacks across multiple vectors"
+    conditions:
+      - rule: "flash_at_runtime"
+      - rule: "cpu_spike"
+      - rule: "network_burst"
+    severity: "critical"
+    risk_score: 1.0
+    mitigation: "Full BMC lockdown and incident response team notification" 
